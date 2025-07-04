@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { analyzeChartImage, type AnalyzeChartImageOutput } from '@/ai/flows/analyze-chart-image';
 import { answerChartQuestion } from '@/ai/flows/answer-chart-question';
 import { useToast } from '@/hooks/use-toast';
 import { AnalysisCard } from '@/components/app/analysis-card';
-import { LiveChart } from '@/components/app/live-chart';
+import LiveChart from '@/components/app/live-chart';
 import { QaCard } from '@/components/app/qa-card';
 import { Header } from '@/components/app/header';
 import { saveNewAnalysis, addQuestionAnswer, saveAnalysisFeedback } from '@/lib/firestore';
@@ -16,6 +16,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import html2canvas from 'html2canvas';
 
 export default function LiveChartPage() {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ export default function LiveChartPage() {
   const [tradingStyle, setTradingStyle] = useState('Swing Trader');
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const { toast } = useToast();
+  const liveChartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const storedStyle = localStorage.getItem('tradingStyle');
@@ -38,7 +40,13 @@ export default function LiveChartPage() {
     }
   }, []);
 
-  const handleChartCapture = async (chartImageDataUri: string) => {
+  const handleAnalyzeClick = useCallback(async () => {
+    if (!liveChartRef.current) return;
+
+    const canvas = await html2canvas(liveChartRef.current);
+    const chartImageDataUri = canvas.toDataURL('image/png');
+
+
     if (!user) {
       toast({ title: 'Please log in', description: 'You must be logged in to analyze charts.' });
       return;
@@ -55,7 +63,7 @@ export default function LiveChartPage() {
     setIsLoadingAnalysis(true);
 
     try {
-      const analysisResult = await analyzeChartImage({ 
+      const analysisResult = await analyzeChartImage({
         photoDataUri: chartImageDataUri,
         tradingStyle,
       });
@@ -66,9 +74,9 @@ export default function LiveChartPage() {
         setAnnotatedImageDataUri(analysisResult.annotatedPhotoDataUri);
         setIsShowingAnnotations(true);
       }
-      
+
       if (analysisResult.trend === 'Error') {
-        return; 
+        return;
       }
 
       const newAnalysisId = await saveNewAnalysis({
@@ -93,7 +101,7 @@ export default function LiveChartPage() {
     } finally {
       setIsLoadingAnalysis(false);
     }
-  };
+  }, [user, toast, tradingStyle]);
 
   const handleQuestionSubmit = async (question: string, style: string) => {
     if (!capturedImageDataUri || !user || !currentAnalysisId) return;
@@ -158,7 +166,7 @@ export default function LiveChartPage() {
   );
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background">
       <Header />
       <main className="flex-1 p-4 md:p-8">
         {!user ? <UnauthenticatedView /> : (
@@ -169,19 +177,24 @@ export default function LiveChartPage() {
                         Monitor real-time cryptocurrency charts and get instant AI analysis
                     </p>
                 </div>
-                
+
                 <Tabs defaultValue="chart" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="chart">Live Chart</TabsTrigger>
                         <TabsTrigger value="analysis">AI Analysis</TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="chart" className="space-y-6">
-                        <LiveChart 
-                            onChartReady={handleChartCapture}
-                            tradingStyle={tradingStyle}
+                      <div ref={liveChartRef} className='bg-card rounded-md p-2'>
+                        <LiveChart
+                            symbol="BTCUSDT"
+                            interval="1m"
                         />
-                        
+                      </div>
+                      <Button onClick={handleAnalyzeClick} disabled={isLoadingAnalysis}>
+                        {isLoadingAnalysis ? 'Analyzing...' : 'Analyze Chart'}
+                      </Button>
+
                         {capturedImageDataUri && (
                             <Card className="bg-card/50 backdrop-blur-sm">
                                 <CardContent className="p-6">
@@ -197,7 +210,7 @@ export default function LiveChartPage() {
                                         <Label htmlFor="annotation-toggle">Annotated</Label>
                                     </div>
                                     <div className="flex justify-center">
-                                        <img 
+                                        <img
                                             src={isShowingAnnotations && annotatedImageDataUri ? annotatedImageDataUri : capturedImageDataUri}
                                             alt="Captured chart"
                                             className="max-w-full h-auto rounded-lg border border-border"
@@ -207,7 +220,7 @@ export default function LiveChartPage() {
                             </Card>
                         )}
                     </TabsContent>
-                    
+
                     <TabsContent value="analysis" className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div className="space-y-6">
@@ -235,4 +248,4 @@ export default function LiveChartPage() {
       </main>
     </div>
   );
-} 
+}

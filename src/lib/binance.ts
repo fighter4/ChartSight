@@ -1,4 +1,4 @@
-const BINANCE_BASE_URL = 'https://api.binance.com';
+const BINANCE_BASE_URL = 'https://api.binance.us';
 
 function isServer() {
   return typeof window === 'undefined';
@@ -58,7 +58,8 @@ export class BinanceService {
       }
       const response = await fetch(clientUrl.toString());
       if (!response.ok) {
-        throw new Error(`Proxy API error: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Proxy API error: ${response.status} ${response.statusText} - ${errorText}`);
       }
       return response.json();
     }
@@ -73,10 +74,6 @@ export class BinanceService {
       interval,
       limit: limit.toString(),
     };
-    // Debug log
-    if (typeof window !== 'undefined') {
-      console.log('[BinanceService.getKlines] endpoint:', '/api/v3/klines', 'params:', params);
-    }
     const data = await this.makeRequest('/api/v3/klines', params);
     return data.map((kline: any[]) => ({
       openTime: kline[0],
@@ -120,9 +117,6 @@ export class BinanceService {
       throw new Error('Missing required symbol for get24hrTicker');
     }
     const params = { symbol: symbol.toUpperCase() };
-    if (typeof window !== 'undefined') {
-      console.log('[BinanceService.get24hrTicker] endpoint:', '/api/v3/ticker/24hr', 'params:', params);
-    }
     return this.makeRequest('/api/v3/ticker/24hr', params);
   }
 
@@ -144,4 +138,4 @@ export class BinanceService {
       quoteVolume: ticker.quoteVolume,
     }));
   }
-} 
+}
