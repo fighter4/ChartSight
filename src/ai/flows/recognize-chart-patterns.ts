@@ -1,16 +1,15 @@
 'use server';
 
 /**
- * @fileOverview Recognizes technical patterns in a crypto chart image.
- *
- * - recognizeChartPatterns - A function that handles the pattern recognition process.
+ * @fileOverview Advanced Pattern Recognition Engine with institutional-grade pattern analysis, evolution tracking, and psychology insights.
+ * - recognizeChartPatterns - A function that handles advanced pattern recognition with comprehensive validation.
  * - RecognizeChartPatternsInput - The input type for the function.
  * - RecognizeChartPatternsOutput - The return type for the function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { PatternWithProbabilitySchema } from '../schemas';
+import { EnhancedPatternSchema } from '../schemas';
 
 const RecognizeChartPatternsInputSchema = z.object({
   photoDataUri: z
@@ -19,54 +18,136 @@ const RecognizeChartPatternsInputSchema = z.object({
       "A crypto chart image, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   tradingStyle: z.string().optional().describe("The user's preferred trading style (e.g., 'Scalper', 'Day Trader', 'Swing Trader', 'Position Trader')."),
+  timeframe: z.string().optional().describe("The timeframe of the chart (e.g., '1m', '5m', '15m', '1h', '4h', '1d', '1w')."),
 });
 export type RecognizeChartPatternsInput = z.infer<typeof RecognizeChartPatternsInputSchema>;
 
 const RecognizeChartPatternsOutputSchema = z.object({
-  patterns: z.array(PatternWithProbabilitySchema).describe('An array of recognized technical patterns, including their success probability and current status.'),
+  patterns: z.array(EnhancedPatternSchema).describe("Array of identified patterns with comprehensive analysis"),
+  pattern_summary: z.string().describe("Summary of all identified patterns"),
+  market_context: z.string().describe("Overall market context based on pattern analysis"),
+  trading_opportunities: z.array(z.string()).describe("Specific trading opportunities identified"),
 });
 export type RecognizeChartPatternsOutput = z.infer<typeof RecognizeChartPatternsOutputSchema>;
 
-export async function recognizeChartPatterns(input: RecognizeChartPatternsInput): Promise<RecognizeChartPatternsOutput> {
+export async function recognizeChartPatterns(
+  input: RecognizeChartPatternsInput
+): Promise<RecognizeChartPatternsOutput> {
   return recognizeChartPatternsFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'recognizeChartPatternsPrompt',
-  input: {schema: RecognizeChartPatternsInputSchema},
-  output: {schema: RecognizeChartPatternsOutputSchema},
-  prompt: `You are "CryptoChart Insight," a sophisticated AI trading analysis expert with a specialization in advanced pattern recognition. Your task is to identify high-probability technical analysis patterns in the provided chart image, including their current status.
+// Advanced Pattern Recognition Engine
+const advancedPatternRecognitionPrompt = ai.definePrompt({
+    name: 'advancedPatternRecognitionPrompt',
+    input: { schema: RecognizeChartPatternsInputSchema },
+    output: { schema: RecognizeChartPatternsOutputSchema },
+    prompt: `You are an elite pattern recognition specialist with 20+ years of institutional trading experience. Your task is to identify, validate, and predict the evolution of chart patterns with surgical precision.
 
-**Your analysis MUST be tailored to the user's specified trading style: {{tradingStyle}}**
-- A 5-minute bull flag is critical for a 'Scalper' but mostly irrelevant for a 'Position Trader'.
-- A weekly Head and Shoulders pattern is critical for a 'Swing Trader' but too slow for a 'Day Trader'.
-- Prioritize identifying patterns that are most relevant to the timeframe and typical hold period of the specified trading style.
+**User's Trading Style:** {{tradingStyle}}
+**Chart Timeframe:** {{timeframe}}
 
-**Pattern Identification & Status Task:**
+### Enhanced Pattern Analysis Framework
 
-Based on the chart's context, identify any of the following technical analysis patterns that are relevant to the user's trading style:
-- Head and Shoulders (and Inverse)
-- Double Top / Double Bottom
-- Triangles (Ascending, Descending, Symmetrical)
-- Flags and Pennants
-- Wedges (Rising, Falling)
-- Cup and Handle
-- Key Candlestick Patterns at significant levels (e.g., Bullish/Bearish Engulfing, Hammer, Doji at a major support/resistance).
+**Primary Analysis Categories:**
 
-For each pattern you identify, you MUST provide:
-1.  **Name**: The name of the pattern.
-2.  **Probability**: The estimated probability of the pattern playing out successfully, as a percentage (e.g., "75%").
-3.  **Status**: The current status of the pattern. This is a critical field. Use one of the following:
-    *   **'Forming'**: The pattern is still developing and not yet complete.
-    *   **'Active'**: The pattern is complete and suggests an imminent move.
-    *   **'Confirmed'**: A breakout in the expected direction has occurred.
-    *   **'Invalidated'**: The pattern has clearly failed (e.g., price broke the neckline of a Head and Shoulders in the wrong direction).
+1. **Classical Patterns:**
+   - Head & Shoulders (regular and inverted)
+   - Triangles (ascending, descending, symmetrical, expanding)
+   - Flags and Pennants (bull and bear)
+   - Wedges (rising and falling)
+   - Double/Triple Tops and Bottoms
+   - Cup and Handle, Rounding patterns
 
-**Crucially, you must actively look for and report on 'Invalidated' patterns.** A failed setup is often a strong signal in the opposite direction and is just as important as a successful pattern.
+2. **Advanced Patterns:**
+   - Wyckoff Accumulation/Distribution phases
+   - Elliott Wave structures (impulse and corrective waves)
+   - Harmonic patterns (Gartley, Butterfly, Crab, Bat, Shark)
+   - Fibonacci retracement and extension patterns
+   - ABCD patterns and extensions
 
-If no clear patterns (of any status) are visible, return an empty array. Your final output must be only the structured JSON.
+3. **Institutional Patterns:**
+   - Order blocks (bullish and bearish)
+   - Fair Value Gaps (FVG)
+   - Liquidity sweeps and equal highs/lows
+   - Smart Money Concepts (SMC)
+   - Institutional order flow zones
+   - Break of structure (BOS) and change of character (CHoCH)
 
-Chart Image: {{media url=photoDataUri}}`,
+4. **Volume-Based Patterns:**
+   - Volume Profile imbalances
+   - VPOC (Volume Point of Control) shifts
+   - Volume Spread Analysis (VSA)
+   - Accumulation/Distribution patterns
+   - Volume climax patterns
+
+**Pattern Validation Matrix:**
+For each identified pattern, provide:
+1. **Formation Quality (1-10)**: Rate the textbook accuracy and clarity
+2. **Volume Confirmation (1-10)**: Volume pattern alignment with price action
+3. **Market Context (1-10)**: How well it fits broader market structure
+4. **Timeframe Confluence (1-10)**: Multi-timeframe validation
+5. **Probability Score (1-100%)**: Likelihood of expected outcome
+
+**Pattern Evolution Tracking:**
+- **Stage 1**: Initial formation (0-25% complete) - Pattern structure emerging
+- **Stage 2**: Development (25-75% complete) - Pattern taking shape
+- **Stage 3**: Maturation (75-95% complete) - Pattern nearly complete
+- **Stage 4**: Breakout/Breakdown imminent (95-100%) - Decision point
+- **Stage 5**: Confirmed completion - Pattern has played out
+- **Stage 6**: Target achievement or failure - Final outcome
+
+**Advanced Pattern Psychology:**
+Analyze the psychological dynamics:
+- **Retail Sentiment**: What retail traders likely see and how they're positioned
+- **Smart Money Activity**: Evidence of institutional positioning and accumulation/distribution
+- **Liquidity Analysis**: Where stops and targets cluster, equal highs/lows
+- **False Signal Probability**: Likelihood of fakeout/shakeout based on pattern quality
+
+### Trading Style Adaptation Matrix
+
+**Scalper (1-15 min timeframes):**
+- Focus on micro-patterns, order flow, bid/ask dynamics
+- Identify 5-pip to 20-pip opportunities
+- Emphasize Level 2 data interpretation
+- Flag patterns, mini-triangles, support/resistance bounces
+- Volume profile micro-structures
+
+**Day Trader (15min-4hr timeframes):**
+- Classical patterns with intraday bias
+- Confluence with session opens/closes (London, NY, Asia)
+- News event pattern disruptions
+- Momentum continuation patterns
+- Gap trading setups
+
+**Swing Trader (4hr-Daily timeframes):**
+- Multi-day pattern development
+- Weekly/monthly level interactions
+- Earnings/event-driven pattern modifications
+- Seasonal pattern tendencies
+- Sector rotation patterns
+
+**Position Trader (Daily-Weekly timeframes):**
+- Major trend continuation/reversal patterns
+- Macro-economic pattern influences
+- Long-term Elliott Wave analysis
+- Quarterly/annual pattern cycles
+- Fundamental catalyst integration
+
+### Pattern Recognition Instructions:
+
+1. **Scan for Multiple Pattern Types**: Look for classical, advanced, institutional, and volume-based patterns simultaneously
+2. **Validate Each Pattern**: Apply the validation matrix to every identified pattern
+3. **Assess Evolution Stage**: Determine which stage each pattern is in
+4. **Analyze Psychology**: Consider retail vs. smart money positioning
+5. **Adapt to Trading Style**: Focus on patterns relevant to the user's timeframe
+6. **Identify Confluences**: Look for multiple patterns confirming each other
+7. **Assess Risk/Reward**: Calculate probability-weighted outcomes
+
+**Chart Image:**
+{{media url=photoDataUri}}
+
+**Output Requirements:**
+Provide a comprehensive pattern analysis including all identified patterns with their validation scores, evolution stages, psychological analysis, and trading opportunities. Focus on patterns most relevant to the user's trading style and timeframe.`
 });
 
 const recognizeChartPatternsFlow = ai.defineFlow(
@@ -75,19 +156,16 @@ const recognizeChartPatternsFlow = ai.defineFlow(
     inputSchema: RecognizeChartPatternsInputSchema,
     outputSchema: RecognizeChartPatternsOutputSchema,
   },
-  async input => {
-    try {
-      const {output} = await prompt(input);
-      // If the model fails to produce valid output, gracefully return an empty array of patterns
-      // to prevent the entire analysis from failing.
-      if (!output) {
-        return { patterns: [] };
-      }
-      return output;
-    } catch (error) {
-      console.error("Error in recognizeChartPatternsFlow:", error);
-      // Gracefully return an empty array of patterns to prevent the entire analysis from failing.
-      return { patterns: [] };
+  async (input): Promise<RecognizeChartPatternsOutput> => {
+    const {output} = await advancedPatternRecognitionPrompt(input);
+    if (!output) {
+      return { 
+        patterns: [],
+        pattern_summary: "No clear patterns identified",
+        market_context: "Insufficient data for pattern analysis",
+        trading_opportunities: []
+      };
     }
+    return output;
   }
 );

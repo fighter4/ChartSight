@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Build the Binance API URL
-  const binanceUrl = new URL(`https://api.binance.us${endpoint}`);
+  const binanceUrl = new URL(`https://api.binance.com${endpoint}`);
   // Forward all other query params except 'endpoint'
   searchParams.forEach((value, key) => {
     if (key !== 'endpoint') {
